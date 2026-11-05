@@ -1,0 +1,45 @@
+<UserControl x:Class="Samba.Modules.LoginModule.LoginView" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" 
+xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+     xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:Login1="clr-namespace:Samba.Modules.LoginModule" mc:Ignorable="d" d:DesignWidth="774" Background="#F1F5F9"
+     PreviewTextInput="UserControl_PreviewTextInput" PreviewKeyDown="UserControl_PreviewKeyDown">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Name="Column1" Width="*" />
+            <ColumnDefinition Name="Column2" Width="*" />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="auto" />
+        </Grid.RowDefinitions>
+                <StackPanel Grid.Column="0" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="24">
+            <Border Background="#0F766E" Width="96" Height="96" CornerRadius="24" HorizontalAlignment="Left">
+                <TextBlock Text="e" FontSize="80" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-14,0,0"/>
+            </Border>
+            <TextBlock Text="EboPOS" FontSize="48" FontWeight="SemiBold" Foreground="#12283D" Margin="0,20,0,6"/>
+            <TextBlock Text="Your service. Simplified." FontSize="18" Foreground="#64748B"/>
+        </StackPanel>
+        <TextBlock Grid.Row="1" Grid.ColumnSpan="2" FontSize="14" FontWeight="SemiBold" Foreground="#64748B" Text="{Binding AppLabel}"
+             Margin="16,8">
+            <TextBlock.Effect>
+                <DropShadowEffect Opacity="0.3" ShadowDepth="1" BlurRadius="3">
+                </DropShadowEffect>
+            </TextBlock.Effect>
+        </TextBlock>
+        <StackPanel Grid.Column="1" Grid.RowSpan="2" VerticalAlignment="Center">
+            <Border Grid.Column="1" Width="350" Height="400" CornerRadius="16" BorderThickness="1" Background="White"
+                 BorderBrush="#CBD5E1">
+                <Login1:LoginPadControl x:Name="PadControl" Margin="18" PinSubmitted="LoginPadControl_PinSubmitted" />
+            </Border>
+            <TextBlock FontSize="14" HorizontalAlignment="Center" Text="{Binding AdminPasswordHint}"
+                 TextAlignment="Center" />
+            <Button HorizontalAlignment="Center" MinWidth="110" Height="50" FontWeight="Bold" FontSize="18"
+                 Margin="5" Click="Button_Click">
+                <DockPanel>
+                    <Image Source="Images/LanShutDown.icon.gif" Stretch="None"/>
+                    <Label Content="{LocText Exit}"/>                    
+                </DockPanel>
+            </Button>
+        </StackPanel>
+    </Grid>
+</UserControl>
