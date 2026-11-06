@@ -35,6 +35,17 @@ class ReportCenterTests
   a.Payments.Add(new Payment{Name="JazzCash",Amount=75});b.Payments.Add(new Payment{Name="Easypaisa",Amount=50});
   var tickets=new[]{a,b};
   foreach(var mode in OperationalReportViewModel.Modes){var rows=OperationalReportViewModel.BuildRows(tickets,mode);Check(rows.Count>1 && rows.All(r=>r.Length==rows[0].Length),mode+" creates consistent columns");Check(OperationalReportViewModel.BuildRows(new Ticket[0],mode).Count==1,mode+" handles empty data");}
+  var definitions=new[]{new PaymentType{Id=1,Name="Cash"},new PaymentType{Id=5,Name="JazzCash"},new PaymentType{Id=7,Name="Easypaisa"},new PaymentType{Id=8,Name="Bank Transfer"}};
+  foreach(var type in definitions)type.AddPaymentTypeMap();
+  typeof(ReportContext).GetField("_paymentTypes",BindingFlags.NonPublic|BindingFlags.Static).SetValue(null,definitions);
+  var walletTicket=new Ticket();walletTicket.Payments.Add(new Payment{PaymentTypeId=1,Name="Cash",Amount=100});walletTicket.Payments.Add(new Payment{PaymentTypeId=5,Name="Cash",Amount=25});walletTicket.Payments.Add(new Payment{PaymentTypeId=7,Name="Cash",Amount=50});
+  var walletRows=OperationalReportViewModel.BuildRows(new[]{walletTicket},"Payment methods",definitions);
+  Check(walletRows.Any(r=>r[0]=="Cash"&&r[2]=="100.00")&&walletRows.Any(r=>r[0]=="JazzCash"&&r[2]=="25.00")&&walletRows.Any(r=>r[0]=="Easypaisa"&&r[2]=="50.00"),"wallet IDs override shared Cash account labels");
+  Check(walletRows.Any(r=>r[0]=="Bank Transfer"&&r[1]=="0"&&r[2]=="0.00"),"configured methods with no activity remain visible");
+  Check(walletRows.Skip(1).Sum(r=>decimal.Parse(r[2],System.Globalization.CultureInfo.InvariantCulture))==175,"payment regrouping preserves the complete received total");
+  walletTicket.Payments.Add(new Payment{PaymentTypeId=99,Name="Retired method",Amount=3});
+  Check(OperationalReportViewModel.BuildRows(new[]{walletTicket},"Payment methods",definitions).Any(r=>r[0]=="Retired method"&&r[2]=="3.00"),"historical deleted payment types retain amounts");
+  Check(OperationalReportViewModel.BuildRows(new Ticket[0],"Payment methods",definitions).Count==5,"zero-activity wallet report includes configured methods");
   var settingsValues=(IProgramSettings)new TestProxy(typeof(IProgramSettings),call=>call.MethodName=="get_UserInfo"?(object)"Demonstration business":null).GetTransparentProxy();
   var settings=(ISettingService)new TestProxy(typeof(ISettingService),call=>call.MethodName=="get_ProgramSettings"?settingsValues:null).GetTransparentProxy();
   ReportContext.CurrentWorkPeriod=new WorkPeriod{StartDate=new DateTime(2024,2,1),EndDate=new DateTime(2024,3,1)};

@@ -166,3 +166,15 @@ leap years. `Build/Tests/ReportCenterTests.cs` exercises all operational modes,
 printable-document creation, empty data, totals, CSV, preview cloning/gating,
 profile serialization/separation and account-type drill-down with dummy services.
 No live database is included in the repository or used by these tests.
+
+### Payment-method labels and Settings theme
+
+Payment-method reports now resolve the configured payment-type ID, rather than
+the payment record's account-name label. JazzCash and Easypaisa remain distinct
+from Cash even when they share the Cash account. Configured mapped methods with
+no activity display zero rows; historical/deleted types retain their recorded
+labels and amounts. This change does not relabel or modify stored transactions.
+Settings navigation now uses flat teal/mint category selections and clearer
+command buttons while retaining its existing commands, tabs and editor bindings.
+
+![Settings navigation with demo content](docs/screenshots/settings.png)

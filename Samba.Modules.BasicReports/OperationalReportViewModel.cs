@@ -20,16 +20,26 @@ namespace Samba.Modules.BasicReports
   protected override FlowDocument GetReport(){
    var report=new SimpleReport("18cm");report.Document.PageWidth=720;AddDefaultReportHeader(report,ReportContext.CurrentWorkPeriod,_mode);
    report.AddHeader("Scope: tickets selected by last-payment date. Daily/hourly grouping uses ticket creation time. Open tickets included; gross payments before change/refunds.");
-   var data=BuildRows(ReportContext.Tickets,_mode);
+   var data=BuildRows(ReportContext.Tickets,_mode,_mode=="Payment methods"?ReportContext.PaymentTypes:null);
    if(data.Count>0){report.AddColumnLength("data",Enumerable.Repeat("*",data[0].Length).ToArray());report.AddTable("data",data[0]);foreach(var row in data.Skip(1))report.AddRow("data",row);}
    if(data.Count==1)report.AddHeader("No matching records.");
    return report.Document;
   }
   private static string Money(decimal amount){return amount.ToString("0.00",CultureInfo.InvariantCulture);}
-  public static List<string[]> BuildRows(IEnumerable<Ticket> source,string mode){
+  public static List<string[]> BuildRows(IEnumerable<Ticket> source,string mode,IEnumerable<PaymentType> paymentTypes=null){
    var tickets=source.ToList();var rows=new List<string[]>();
    if(mode=="Payment methods"){
-    rows.Add(new[]{"Method","Payments","Gross received"});foreach(var g in tickets.SelectMany(t=>t.Payments).GroupBy(p=>p.Name??"Unnamed").OrderBy(g=>g.Key))rows.Add(new[]{g.Key,g.Count().ToString(),Money(g.Sum(p=>p.Amount))});
+    rows.Add(new[]{"Method","Payments","Gross received"});
+    var payments=tickets.SelectMany(t=>t.Payments).ToList();
+    var definitions=(paymentTypes??Enumerable.Empty<PaymentType>()).GroupBy(p=>p.Id).Select(g=>g.First()).ToList();
+    var knownIds=new HashSet<int>(definitions.Select(p=>p.Id));
+    foreach(var type in definitions.Where(p=>p.PaymentTypeMaps.Any()||payments.Any(x=>x.PaymentTypeId==p.Id)).OrderBy(p=>p.SortOrder).ThenBy(p=>p.Name)){
+     var values=payments.Where(p=>p.PaymentTypeId==type.Id).ToList();
+     rows.Add(new[]{type.Name,values.Count.ToString(),Money(values.Sum(p=>p.Amount))});
+    }
+    // Preserve legacy/deleted payment types without assigning their amounts to a different tender.
+    foreach(var g in payments.Where(p=>!knownIds.Contains(p.PaymentTypeId)).GroupBy(p=>new{p.PaymentTypeId,Name=p.Name??"Unnamed"}).OrderBy(g=>g.Key.Name))
+     rows.Add(new[]{g.Key.Name,g.Count().ToString(),Money(g.Sum(p=>p.Amount))});
    }else if(mode=="Ticket register"){
     rows.Add(new[]{"Ticket","Date","Status","Stored total","Remaining"});foreach(var t in tickets.OrderBy(t=>t.Date))rows.Add(new[]{t.TicketNumber??t.Id.ToString(),t.Date.ToString("yyyy-MM-dd HH:mm"),t.IsClosed?"Closed":"Open",Money(t.TotalAmount),Money(t.RemainingAmount)});
    }else if(mode=="Tax summary"){
