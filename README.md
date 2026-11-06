@@ -119,3 +119,50 @@ FBR, PRA, SRB, KPRA and BRA integrations are **not implemented** in this reposit
 EboPOS is a modified version of **SambaPOS 3**, originally copyright Emre EREN and its contributors. Existing source notices are retained. The supplied upstream license notice specifies **GNU GPL version 3 or later**; see [LICENSE](LICENSE) and the [full GNU GPL v3 text](https://www.gnu.org/licenses/gpl-3.0.html).
 
 Bundled third-party libraries retain their own licenses and notices. Rebranding the frontend does not replace those licenses. The separately referenced SambaWebReports PHP project is not included in this desktop application.
+
+## Report Center and Accounts update
+
+Report Center retains the nine original reports and adds nine operational views:
+daily sales, hourly sales, payment methods, ticket register, ticket status,
+department sales, tax summary, signed adjustments, and last-modified-user summaries.
+All eighteen reports retain the original report-access and date-change permissions.
+
+Search for a report, use its period/date filters and Refresh. Add favorites, filter
+to favorites and choose a zoom level. **Save my view** stores favorites and zoom
+separately for each POS user within the current Windows profile. Preferences live
+in `%LOCALAPPDATA%\EboPOS\ReportPreferences`, outside the POS database. Search is
+session-only. This is a report catalog with saved preferences, not an arbitrary
+SQL query or drag-and-drop report-template designer.
+
+![Report Center with demonstration data](docs/screenshots/report-center.png)
+
+**Preview** opens a cloned, read-only paged copy of the generated report. The
+Preview, Print, Save XPS and Export CSV actions require a generated document.
+CSV export writes rendered table cells with escaping and spreadsheet-formula
+protection for labels. Print can use installed Windows printers, including a PDF
+printer if one is available. Native PDF generation is not included.
+
+Operational report scope deliberately follows the existing ticket selection:
+tickets are selected by last-payment date for the chosen period; daily/hourly
+buckets use ticket creation time. Open tickets are included. Payment-method
+summaries show gross payments on selected tickets before change/refunds, rather
+than a standalone cash-flow reconciliation. Department summaries show department
+IDs. The user summary identifies the last modifying user, not necessarily the
+original cashier. The tax summary uses existing ticket-tax calculations and is
+not a government filing/integration. Monetary totals are not converted across
+currencies. Validate accounting reports against your ledger before production use.
+
+Accounts now displays numeric zero balances instead of dashes. Select an
+account-type total and choose **Account Details** to browse its accounts, then
+select an individual account for its transaction history. Selecting the group
+button returns to totals. Drill-down keeps the screen's date scope and does not
+change saved account-screen settings or post transactions. The table supports
+column sorting, resizing and reordering during the session.
+
+![Accounts with demonstration data](docs/screenshots/accounts.png)
+
+The reporting month-length bug was corrected to use the actual year, including
+leap years. `Build/Tests/ReportCenterTests.cs` exercises all operational modes,
+printable-document creation, empty data, totals, CSV, preview cloning/gating,
+profile serialization/separation and account-type drill-down with dummy services.
+No live database is included in the repository or used by these tests.

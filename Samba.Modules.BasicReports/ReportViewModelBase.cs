@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
@@ -7,6 +7,7 @@ using System.Linq;
 using System.Windows;
 using System.ComponentModel;
 using System.Windows.Documents;
+using System.Windows.Controls;
 using System.Windows.Markup;
 using System.Windows.Threading;
 using System.Windows.Xps.Packaging;
@@ -29,6 +30,7 @@ namespace Samba.Modules.BasicReports
     {
         private readonly List<string> _links;
         public string Header { get { return GetHeader(); } }
+        public virtual string ReportKey { get { return GetType().FullName; } }
 
         private bool _selected;
         public bool Selected
@@ -43,7 +45,7 @@ namespace Samba.Modules.BasicReports
             }
         }
 
-        public string Background { get { return Selected ? "Orange" : "White"; } }
+        public string Background { get { return Selected ? "#0F766E" : "White"; } }
         public string Foreground { get { return Selected ? "White" : "Black"; } }
 
         public ObservableCollection<FilterGroup> FilterGroups { get; set; }
@@ -54,6 +56,8 @@ namespace Samba.Modules.BasicReports
         public ICaptionCommand PrintDocumentCommand { get; set; }
         public ICaptionCommand RefreshFiltersCommand { get; set; }
         public ICaptionCommand SaveDocumentCommand { get; set; }
+        public ICaptionCommand ExportCsvCommand { get; set; }
+        public ICaptionCommand PreviewCommand { get; set; }
 
         public FlowDocument Document { get; set; }
 
@@ -73,10 +77,12 @@ namespace Samba.Modules.BasicReports
             UserService = userService;
             ApplicationState = applicationState;
 
-            PrintDocumentCommand = new CaptionCommand<string>(Resources.Print, OnPrintDocument);
+            PrintDocumentCommand = new CaptionCommand<string>(Resources.Print, OnPrintDocument, s => Document != null);
             RefreshFiltersCommand = new CaptionCommand<string>(Resources.Refresh, OnRefreshFilters, CanRefreshFilters);
-            SaveDocumentCommand = new CaptionCommand<string>(Resources.Save, OnSaveDocument);
+            SaveDocumentCommand = new CaptionCommand<string>(Resources.Save, OnSaveDocument, s => Document != null);
             FilterGroups = new ObservableCollection<FilterGroup>();
+            PreviewCommand = new CaptionCommand<string>("Preview", s => { var copy = (FlowDocument)XamlReader.Parse(XamlWriter.Save(Document)); var reader = new FlowDocumentReader { Document = copy, ViewingMode = FlowDocumentReaderViewingMode.Page, IsFindEnabled = true, IsPrintEnabled = true }; var window = new Window { Title = Header + " - Preview", Width = 1000, Height = 760, WindowStartupLocation = WindowStartupLocation.CenterScreen, Content = reader }; if (Application.Current.MainWindow != null) window.Owner = Application.Current.MainWindow; window.ShowDialog(); }, s => Document != null);
+            ExportCsvCommand = new CaptionCommand<string>("Export CSV", s => { var path = AskFileName(Header, ".csv"); if (!string.IsNullOrEmpty(path)) { try { File.WriteAllLines(path, ReportCsv.Rows(Document.Blocks), new System.Text.UTF8Encoding(true)); } catch (Exception ex) { _logService.LogError(ex); } } }, s => Document != null);
         }
 
         private void OnSaveDocument(string obj)
@@ -226,6 +232,7 @@ namespace Samba.Modules.BasicReports
                             RaisePropertyChanged(() => Document);
                             RaisePropertyChanged(() => StartDateString);
                             RaisePropertyChanged(() => EndDateString);
+                            System.Windows.Input.CommandManager.InvalidateRequerySuggested();
 
                             CreateFilterGroups();
                             foreach (var filterGroup in FilterGroups)
@@ -265,7 +272,7 @@ namespace Samba.Modules.BasicReports
         public void AddDefaultReportHeader(SimpleReport report, WorkPeriod workPeriod, string caption)
         {
             var userInfo = _settingService.ProgramSettings.UserInfo;
-            report.AddHeader(!string.IsNullOrEmpty(userInfo) ? userInfo : "SambaPOS");
+            report.AddHeader(!string.IsNullOrEmpty(userInfo) ? userInfo : "EboPOS");
             report.AddHeader(caption);
             if (workPeriod.EndDate > workPeriod.StartDate)
                 report.AddHeader(workPeriod.StartDate.ToString("dd MMMM yyyy HH:mm") +
@@ -280,7 +287,7 @@ namespace Samba.Modules.BasicReports
         public void AddDefaultReportFooter(FlowDocument report)
         {
             var p = new Paragraph { TextAlignment = TextAlignment.Left, FontSize = 12 };
-            p.Inlines.Add(new Run("Powered by SambaPOS V3") { FontWeight = FontWeights.Bold });
+            p.Inlines.Add(new Run("EboPOS Reports") { FontWeight = FontWeights.Bold });
             report.Blocks.Add(p);
         }
     }

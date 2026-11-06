@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -39,7 +39,7 @@ namespace Samba.Modules.BasicReports
 
         private static IList<ReportViewModelBase> GetReports()
         {
-            return new List<ReportViewModelBase>
+            var result = new List<ReportViewModelBase>
                           {
                               new EndDayReportViewModel(UserService,ApplicationState,LogService,SettingService,CacheService),
                               new ProductReportViewModel(UserService,ApplicationState,LogService,SettingService,CacheService),
@@ -51,6 +51,8 @@ namespace Samba.Modules.BasicReports
                               new CostReportViewModel(UserService,ApplicationState,LogService,SettingService),
                               new CsvBuilderViewModel(UserService,ApplicationState,LogService,SettingService)
                           };
+            foreach (var mode in OperationalReportViewModel.Modes) result.Add(new OperationalReportViewModel(mode, UserService, ApplicationState, LogService, SettingService));
+            return result;
         }
 
         private static IEnumerable<PaymentType> _paymentTypes;
@@ -141,7 +143,7 @@ namespace Samba.Modules.BasicReports
             if (vals[1] < 1) { vals[1] = 1; }
             if (vals[1] > 12) { vals[1] = 12; }
 
-            var dim = DateTime.DaysInMonth(vals[0], vals[1]);
+            var dim = DateTime.DaysInMonth(vals[2], vals[1]);
             if (vals[0] < 1) { vals[0] = 1; }
             if (vals[0] > dim) { vals[0] = dim; }
             return new DateTime(vals[2], vals[1], vals[0]);

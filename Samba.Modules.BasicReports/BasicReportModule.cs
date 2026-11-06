@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.Composition;
+using System.ComponentModel.Composition;
 using System.Linq;
 using Microsoft.Practices.Prism.MefExtensions.Modularity;
 using Microsoft.Practices.Prism.Regions;
@@ -37,7 +37,7 @@ namespace Samba.Modules.BasicReports
 
             _regionManager = regionManager;
             _basicReportView = basicReportView;
-            SetNavigationCommand(Resources.Reports, Resources.Common, "Images/Ppt.png", 60);
+            SetNavigationCommand("Report Center", Resources.Common, "Images/Ppt.png", 60);
 
             PermissionRegistry.RegisterPermission(PermissionNames.OpenReports, PermissionCategories.Navigation, Resources.CanDisplayReports);
             PermissionRegistry.RegisterPermission(PermissionNames.ChangeReportDate, PermissionCategories.Report, Resources.CanChangeReportFilter);
@@ -63,6 +63,7 @@ namespace Samba.Modules.BasicReports
             base.OnNavigate(obj);
             ReportContext.ResetCache();
             ReportContext.CurrentWorkPeriod = ReportContext.ApplicationState.CurrentWorkPeriod;
+            ((BasicReportViewModel)_basicReportView.DataContext).LoadUserPreferences();
         }
 
         protected override void OnInitialization()

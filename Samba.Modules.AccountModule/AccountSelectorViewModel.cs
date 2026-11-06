@@ -109,7 +109,13 @@ namespace Samba.Modules.AccountModule
             get { return _accounts; }
         }
 
-        public AccountScreenRow SelectedAccount { get; set; }
+        private AccountScreenRow _selectedAccount;
+        public AccountScreenRow SelectedAccount
+        {
+            get { return _selectedAccount; }
+            set { _selectedAccount = value; RaisePropertyChanged(() => SelectedAccount); System.Windows.Input.CommandManager.InvalidateRequerySuggested(); }
+        }
+        public string AccountStatus { get; private set; }
 
 
         private void OnAccountScreenSelected(AccountScreen accountScreen)
@@ -119,11 +125,22 @@ namespace Samba.Modules.AccountModule
 
         private bool CanShowAccountDetails(string arg)
         {
-            return SelectedAccount != null && SelectedAccount.AccountId > 0;
+            return SelectedAccount != null && (SelectedAccount.AccountId > 0 || SelectedAccount.AccountTypeId > 0);
         }
 
         private void OnShowAccountDetails(object obj)
         {
+            if (!CanShowAccountDetails(null)) return;
+            if (SelectedAccount.AccountId == 0)
+            {
+                var selected = SelectedAccount;
+                var detailScreen = new AccountScreen { Name = selected.Name, Filter = _selectedAccountScreen.Filter };
+                detailScreen.AccountScreenValues.Add(new AccountScreenValue { AccountTypeId = selected.AccountTypeId, AccountTypeName = selected.Name, DisplayDetails = true });
+                var rows = _accountService.GetAccountScreenRows(detailScreen, _applicationState.CurrentWorkPeriod).ToList();
+                _accounts.Clear(); _accounts.AddRange(rows); SelectedAccount = null;
+                AccountStatus = rows.Count == 0 ? "No accounts exist in this group." : "Select an account and open Account Details. Select the group above to return to totals.";
+                RaisePropertyChanged(() => AccountStatus); OnRefreshed(); return;
+            }
             CommonEventPublisher.PublishEntityOperation(new AccountData(SelectedAccount.AccountId), EventTopicNames.DisplayAccountTransactions, EventTopicNames.ActivateAccountSelector);
         }
 
@@ -164,7 +181,10 @@ namespace Samba.Modules.AccountModule
             _automationCommands = null;
 
             _accounts.Clear();
+            SelectedAccount = null;
             _accounts.AddRange(_accountService.GetAccountScreenRows(accountScreen, _applicationState.CurrentWorkPeriod));
+            AccountStatus = "Select a total to browse its accounts. 0.00 means zero balance for this screen's date scope.";
+            RaisePropertyChanged(() => AccountStatus);
 
             RaisePropertyChanged(() => BatchDocumentButtons);
             RaisePropertyChanged(() => AccountButtons);

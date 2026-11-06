@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.ComponentModel.Composition;
 using System.Windows.Controls;
 
@@ -21,14 +21,7 @@ namespace Samba.Modules.AccountModule
         
         void viewModel_Refreshed(object sender, EventArgs e)
         {
-            var view = MainListView.View as GridView;
-            if (view != null)
-            {
-                view.Columns[0].Width = 0;
-                view.Columns[0].Width = Double.NaN;
-                view.Columns[1].Width = 0;
-                view.Columns[1].Width = Double.NaN;
-            }
+            MainListView.Items.Refresh();
         }
     }
 }

@@ -20,6 +20,7 @@ namespace Samba.Services.Common
 
         protected string CurrencyFormat { get; set; }
         public int AccountId { get; set; }
+        public string DisplayBalance { get { return Balance == 0 && Exchange == 0 ? 0m.ToString("N2") : BalanceStr; } }
         public string BalanceStr
         {
             get

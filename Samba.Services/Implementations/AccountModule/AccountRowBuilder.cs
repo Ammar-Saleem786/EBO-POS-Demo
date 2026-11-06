@@ -27,6 +27,7 @@ namespace Samba.Services.Implementations.AccountModule
         public IEnumerable<AccountScreenRow> GetAccountScreenRows(AccountScreen accountScreen, WorkPeriod currentWorkPeriod)
         {
             var rows = new List<AccountScreenRow>();
+            if (accountScreen == null || (accountScreen.Filter == 3 && currentWorkPeriod == null)) return rows;
             var detailedTemplateNames = accountScreen.AccountScreenValues.Where(x => x.DisplayDetails).Select(x => x.AccountTypeId);
             _accountDao.GetAccountBalances(detailedTemplateNames.ToList(), GetFilter(accountScreen, currentWorkPeriod)).ToList().ForEach(x => rows.Add(AccountScreenRow.Create(x, _cacheService.GetCurrencySymbol(x.Key.ForeignCurrencyId), GetGroupKey(accountScreen, x.Key.AccountTypeId))));
 
